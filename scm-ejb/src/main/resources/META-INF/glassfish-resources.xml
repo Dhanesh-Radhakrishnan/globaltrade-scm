@@ -1,0 +1,19 @@
+<!DOCTYPE resources PUBLIC "-//GlassFish.org//DTD GlassFish Application Server 3.1 Resource Definitions//EN" "http://glassfish.org/dtds/glassfish-resources_1_5.dtd">
+<resources>
+    <jdbc-connection-pool
+            name="SCMConnectionPool"
+            datasource-classname="com.mysql.cj.jdbc.MySQLDataSource"
+            res-type="javax.sql.DataSource">
+        <property name="serverName" value="localhost"/>
+        <property name="portNumber" value="3306"/>
+        <property name="databaseName" value="globaltrade_scm_db"/>
+        <property name="user" value="scm_app"/>
+        <property name="password" value="2.2Dhanesh"/>
+        <property name="useSSL" value="false"/>
+        <property name="serverTimezone" value="UTC"/>
+        <property name="allowPublicKeyRetrieval" value="true"/>
+    </jdbc-connection-pool>
+    <jdbc-resource
+            pool-name="SCMConnectionPool"
+            jndi-name="jdbc/SCMPool"/>
+</resources>
