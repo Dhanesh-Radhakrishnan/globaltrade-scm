@@ -8,7 +8,7 @@
         <property name="portNumber" value="3306"/>
         <property name="databaseName" value="globaltrade_scm_db"/>
         <property name="user" value="scm_app"/>
-        <property name="password" value="2.2Dhanesh"/>
+        <property name="password" value="${ALIAS=scm-db-password}"/>
         <property name="useSSL" value="false"/>
         <property name="serverTimezone" value="UTC"/>
         <property name="allowPublicKeyRetrieval" value="true"/>

@@ -29,7 +29,7 @@
             <groupId>lk.jiat</groupId>
             <artifactId>scm-ejb</artifactId>
             <version>1.0</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
