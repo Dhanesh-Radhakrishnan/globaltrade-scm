@@ -25,6 +25,12 @@
             <version>10.0.0</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>lk.jiat</groupId>
+            <artifactId>scm-ejb</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
 
