@@ -13,14 +13,17 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "order_number", nullable = false, unique = true)
     private String orderNumber;
 
+    @Column(name = "order_date")
     private LocalDateTime orderDate;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "status")
     private OrderStatus status = OrderStatus.PENDING;
 
+    @Column(name = "total_amount")
     private BigDecimal totalAmount;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -30,6 +33,13 @@ public class Order {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shipment_id")
     private Shipment shipment;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "inventory_item_id")
+    private InventoryItem inventoryItem;
+
+    @Column(name = "quantity", nullable = false)
+    private int quantity;
 
     public Long getId() {
         return id;
@@ -85,5 +95,21 @@ public class Order {
 
     public void setShipment(Shipment shipment) {
         this.shipment = shipment;
+    }
+
+    public InventoryItem getInventoryItem() {
+        return inventoryItem;
+    }
+
+    public void setInventoryItem(InventoryItem inventoryItem) {
+        this.inventoryItem = inventoryItem;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
     }
 }

@@ -1,0 +1,67 @@
+package lk.jiat.scm.service;
+
+import jakarta.ejb.EJB;
+import jakarta.ejb.Stateless;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import lk.jiat.scm.entity.InventoryItem;
+import lk.jiat.scm.entity.Order;
+import lk.jiat.scm.entity.OrderStatus;
+import lk.jiat.scm.entity.Shipment;
+import lk.jiat.scm.entity.ShipmentStatus;
+import lk.jiat.scm.entity.Vendor;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Stateless
+public class OrderProcessingBean {
+
+    @PersistenceContext(unitName = "SCMPU")
+    private EntityManager em;
+
+    @EJB
+    private VendorServiceBean vendorService;
+
+    public Order placeOrder(Long vendorId, Long inventoryItemId, int quantity) {
+        Vendor vendor = vendorService.findById(vendorId);
+        if (vendor == null) {
+            throw new RuntimeException("Vendor not found: " + vendorId);
+        }
+
+        InventoryItem item = em.find(InventoryItem.class, inventoryItemId);
+        if (item == null) {
+            throw new RuntimeException("Inventory item not found: " + inventoryItemId);
+        }
+        if (item.getQuantityOnHand() < quantity) {
+            throw new RuntimeException("Insufficient stock for item: " + item.getSku());
+        }
+
+        BigDecimal totalAmount = item.getUnitPrice().multiply(BigDecimal.valueOf(quantity));
+
+        item.setQuantityOnHand(item.getQuantityOnHand() - quantity);
+
+        Shipment shipment = new Shipment();
+        shipment.setTrackingNumber("TRK-" + UUID.randomUUID().toString().substring(0, 12).toUpperCase());
+        shipment.setShipmentStatus(ShipmentStatus.PENDING);
+        em.persist(shipment);
+
+        Order order = new Order();
+        order.setOrderNumber("ORD-" + UUID.randomUUID().toString().substring(0, 12).toUpperCase());
+        order.setOrderDate(LocalDateTime.now());
+        order.setStatus(OrderStatus.PENDING);
+        order.setTotalAmount(totalAmount);
+        order.setVendor(vendor);
+        order.setInventoryItem(item);
+        order.setQuantity(quantity);
+        order.setShipment(shipment);
+        em.persist(order);
+
+        return order;
+    }
+
+    public Order findById(Long id) {
+        return em.find(Order.class, id);
+    }
+}

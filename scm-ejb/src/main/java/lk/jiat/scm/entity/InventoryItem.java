@@ -2,6 +2,8 @@ package lk.jiat.scm.entity;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "inventory_items")
 public class InventoryItem {
@@ -10,16 +12,24 @@ public class InventoryItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "sku", nullable = false, unique = true)
     private String sku;
 
+    @Column(name = "item_name")
     private String itemName;
 
+    @Column(name = "quantity_on_hand")
     private int quantityOnHand;
 
+    @Column(name = "reorder_threshold")
     private int reorderThreshold;
 
+    @Column(name = "warehouse_location")
     private String warehouseLocation;
+
+    @Column(name = "unit_price", nullable = false)
+    private BigDecimal unitPrice;
+
 
     public Long getId() {
         return id;
@@ -43,6 +53,14 @@ public class InventoryItem {
 
     public void setItemName(String itemName) {
         this.itemName = itemName;
+    }
+
+    public BigDecimal getUnitPrice() {
+        return unitPrice;
+    }
+
+    public void setUnitPrice(BigDecimal unitPrice) {
+        this.unitPrice = unitPrice;
     }
 
     public int getQuantityOnHand() {

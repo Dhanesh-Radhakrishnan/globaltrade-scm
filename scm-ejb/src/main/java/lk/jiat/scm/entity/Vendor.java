@@ -10,17 +10,22 @@ public class Vendor {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "vendor_name", nullable = false)
     private String vendorName;
 
+    @Column(name = "contact_email")
     private String contactEmail;
 
+    @Column(name = "contact_phone")
     private String contactPhone;
 
+    @Column(name = "country")
     private String country;
 
+    @Column(name = "performance_rating")
     private Double performanceRating;
 
+    @Column(name = "active")
     private boolean active = true;
 
     public Long getId() {

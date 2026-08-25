@@ -14,22 +14,28 @@ public class Shipment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "tracking_number", nullable = false, unique = true)
     private String trackingNumber;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "shipment_status")
     private ShipmentStatus shipmentStatus = ShipmentStatus.PENDING;
 
+    @Column(name = "expected_delivery_date")
     private LocalDateTime expectedDeliveryDate;
 
+    @Column(name = "carrier_name")
     private String carrierName;
 
+    @Column(name = "origin_country")
     private String originCountry;
 
+    @Column(name = "destination_country")
     private String destinationCountry;
 
     @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CustomsDocument> customsDocuments = new ArrayList<>();
+
 
     public Long getId() {
         return id;

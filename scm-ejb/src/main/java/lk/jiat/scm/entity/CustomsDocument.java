@@ -12,13 +12,16 @@ public class CustomsDocument {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "document_number", nullable = false, unique = true)
     private String documentNumber;
 
+    @Column(name = "document_type")
     private String documentType;
 
+    @Column(name = "compliance_deadline")
     private LocalDateTime complianceDeadline;
 
+    @Column(name = "verified")
     private boolean verified;
 
     @ManyToOne(fetch = FetchType.LAZY)

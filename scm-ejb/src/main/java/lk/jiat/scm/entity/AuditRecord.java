@@ -12,20 +12,22 @@ public class AuditRecord {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "entity_type", nullable = false)
     private String entityType;
 
-    @Column(nullable = false)
+    @Column(name = "entity_id", nullable = false)
     private Long entityId;
 
-    @Column(nullable = false)
+    @Column(name = "action", nullable = false)
     private String action;
 
+    @Column(name = "performed_by")
     private String performedBy;
 
+    @Column(name = "timestamp")
     private LocalDateTime timestamp = LocalDateTime.now();
 
-    @Column(length = 1000)
+    @Column(name = "details", length = 1000)
     private String details;
 
     public Long getId() {
