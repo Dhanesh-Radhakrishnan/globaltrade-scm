@@ -22,12 +22,7 @@ public class TestOrderResource {
         String result = "orderId=" + order.getId()
                 + ", orderNumber=" + order.getOrderNumber()
                 + ", quantity=" + order.getQuantity()
-                + ", totalAmount=" + order.getTotalAmount()
-                + ", vendor=" + order.getVendor().getVendorName()
-                + ", sku=" + order.getInventoryItem().getSku()
-                + ", remainingStock=" + order.getInventoryItem().getQuantityOnHand()
-                + ", shipmentTracking=" + order.getShipment().getTrackingNumber()
-                + ", shipmentStatus=" + order.getShipment().getShipmentStatus();
+                + ", totalAmount=" + order.getTotalAmount();
         return Response.ok(result).build();
     }
 }

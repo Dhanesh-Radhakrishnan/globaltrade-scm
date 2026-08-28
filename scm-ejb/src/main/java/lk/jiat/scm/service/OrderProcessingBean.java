@@ -2,6 +2,8 @@ package lk.jiat.scm.service;
 
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
+import jakarta.ejb.TransactionAttribute;
+import jakarta.ejb.TransactionAttributeType;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lk.jiat.scm.entity.InventoryItem;
@@ -27,6 +29,7 @@ public class OrderProcessingBean {
     @EJB
     private InventoryMonitorBean inventoryMonitor;
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public Order placeOrder(Long vendorId, Long inventoryItemId, int quantity) {
         Vendor vendor = vendorService.findById(vendorId);
         if (vendor == null) {

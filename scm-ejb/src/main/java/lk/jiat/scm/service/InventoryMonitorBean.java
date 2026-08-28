@@ -1,8 +1,6 @@
 package lk.jiat.scm.service;
 
-import jakarta.ejb.Lock;
-import jakarta.ejb.LockType;
-import jakarta.ejb.Singleton;
+import jakarta.ejb.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lk.jiat.scm.entity.InventoryItem;
@@ -11,6 +9,9 @@ import java.util.List;
 
 @Singleton
 public class InventoryMonitorBean {
+
+    @EJB
+    private AuditService auditService;
 
     @PersistenceContext(unitName = "SCMPU")
     private EntityManager em;
@@ -44,5 +45,19 @@ public class InventoryMonitorBean {
                         "SELECT i FROM InventoryItem i WHERE i.quantityOnHand < i.reorderThreshold",
                         InventoryItem.class)
                 .getResultList();
+    }
+
+    @Lock(LockType.READ)
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void scanAndAlertLowStock() {
+        for (InventoryItem item : findBelowThreshold()) {
+            auditService.record(
+                    "InventoryItem",
+                    item.getId(),
+                    "LOW_STOCK_ALERT",
+                    "SYSTEM_TIMER",
+                    "Quantity on hand " + item.getQuantityOnHand() + " below reorder threshold " + item.getReorderThreshold()
+            );
+        }
     }
 }

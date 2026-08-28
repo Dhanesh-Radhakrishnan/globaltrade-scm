@@ -1,6 +1,8 @@
 package lk.jiat.scm.service;
 
 import jakarta.ejb.Stateless;
+import jakarta.ejb.TransactionAttribute;
+import jakarta.ejb.TransactionAttributeType;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lk.jiat.scm.entity.CustomsDocument;
@@ -68,5 +70,23 @@ public class CustomsComplianceBean {
                         CustomsDocument.class)
                 .setParameter("windowEnd", windowEnd)
                 .getResultList();
+    }
+
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public boolean checkExternalCustomsSystem(Long documentId) {
+        CustomsDocument document = em.find(CustomsDocument.class, documentId);
+        if (document == null) {
+            throw new RuntimeException("Customs document not found: " + documentId);
+        }
+        return simulateExternalCustomsCheck(document.getDocumentNumber());
+    }
+
+    private boolean simulateExternalCustomsCheck(String documentNumber) {
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        return true;
     }
 }
