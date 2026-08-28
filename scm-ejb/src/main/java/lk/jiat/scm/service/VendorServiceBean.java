@@ -1,23 +1,32 @@
 package lk.jiat.scm.service;
 
 import jakarta.ejb.Stateless;
+import jakarta.interceptor.ExcludeClassInterceptors;
+import jakarta.interceptor.Interceptors;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lk.jiat.scm.entity.Vendor;
+import lk.jiat.scm.interceptor.AuditLoggingInterceptor;
+import lk.jiat.scm.interceptor.VendorDataValidationInterceptor;
 
 import java.util.List;
 
 @Stateless
+@Interceptors({AuditLoggingInterceptor.class})
 public class VendorServiceBean {
 
     @PersistenceContext(unitName = "SCMPU")
     private EntityManager em;
 
+    @ExcludeClassInterceptors
+    @Interceptors({VendorDataValidationInterceptor.class, AuditLoggingInterceptor.class})
     public Vendor createVendor(Vendor vendor) {
         em.persist(vendor);
+        em.flush();
         return vendor;
     }
 
+    @ExcludeClassInterceptors
     public Vendor findById(Long id) {
         return em.find(Vendor.class, id);
     }
@@ -32,6 +41,8 @@ public class VendorServiceBean {
                 .getResultList();
     }
 
+    @ExcludeClassInterceptors
+    @Interceptors({VendorDataValidationInterceptor.class, AuditLoggingInterceptor.class})
     public Vendor updateVendor(Vendor vendor) {
         return em.merge(vendor);
     }

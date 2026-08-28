@@ -4,6 +4,7 @@ import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
+import jakarta.interceptor.Interceptors;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lk.jiat.scm.entity.InventoryItem;
@@ -12,12 +13,14 @@ import lk.jiat.scm.entity.OrderStatus;
 import lk.jiat.scm.entity.Shipment;
 import lk.jiat.scm.entity.ShipmentStatus;
 import lk.jiat.scm.entity.Vendor;
+import lk.jiat.scm.interceptor.AuditLoggingInterceptor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Stateless
+@Interceptors({AuditLoggingInterceptor.class})
 public class OrderProcessingBean {
 
     @PersistenceContext(unitName = "SCMPU")
@@ -60,6 +63,7 @@ public class OrderProcessingBean {
         order.setQuantity(quantity);
         order.setShipment(shipment);
         em.persist(order);
+        em.flush();
 
         return order;
     }
