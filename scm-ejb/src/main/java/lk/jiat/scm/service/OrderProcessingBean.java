@@ -24,23 +24,23 @@ public class OrderProcessingBean {
     @EJB
     private VendorServiceBean vendorService;
 
+    @EJB
+    private InventoryMonitorBean inventoryMonitor;
+
     public Order placeOrder(Long vendorId, Long inventoryItemId, int quantity) {
         Vendor vendor = vendorService.findById(vendorId);
         if (vendor == null) {
             throw new RuntimeException("Vendor not found: " + vendorId);
         }
 
-        InventoryItem item = em.find(InventoryItem.class, inventoryItemId);
-        if (item == null) {
-            throw new RuntimeException("Inventory item not found: " + inventoryItemId);
-        }
+        InventoryItem item = inventoryMonitor.checkStock(inventoryItemId);
         if (item.getQuantityOnHand() < quantity) {
             throw new RuntimeException("Insufficient stock for item: " + item.getSku());
         }
 
         BigDecimal totalAmount = item.getUnitPrice().multiply(BigDecimal.valueOf(quantity));
 
-        item.setQuantityOnHand(item.getQuantityOnHand() - quantity);
+        inventoryMonitor.adjustStock(inventoryItemId, -quantity);
 
         Shipment shipment = new Shipment();
         shipment.setTrackingNumber("TRK-" + UUID.randomUUID().toString().substring(0, 12).toUpperCase());
