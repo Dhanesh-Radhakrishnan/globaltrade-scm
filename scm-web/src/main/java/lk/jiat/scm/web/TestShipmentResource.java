@@ -9,6 +9,8 @@ import lk.jiat.scm.entity.Shipment;
 import lk.jiat.scm.entity.ShipmentStatus;
 import lk.jiat.scm.service.ShipmentTrackingBean;
 
+import java.time.LocalDateTime;
+
 @Path("/test/shipment")
 public class TestShipmentResource {
 
@@ -47,9 +49,19 @@ public class TestShipmentResource {
         return Response.ok(result.toString()).build();
     }
 
+    @GET
+    @Path("/schedule-delivery-check")
+    public Response scheduleDeliveryCheck(@QueryParam("shipmentId") Long shipmentId,
+                                          @QueryParam("secondsFromNow") int secondsFromNow) {
+        LocalDateTime expectedDeliveryDate = LocalDateTime.now().plusSeconds(secondsFromNow);
+        Shipment shipment = shipmentTrackingBean.scheduleDeliveryCheck(shipmentId, expectedDeliveryDate);
+        return Response.ok(describe(shipment)).build();
+    }
+
     private String describe(Shipment shipment) {
         return "shipmentId=" + shipment.getId()
                 + ", trackingNumber=" + shipment.getTrackingNumber()
-                + ", status=" + shipment.getShipmentStatus();
+                + ", status=" + shipment.getShipmentStatus()
+                + ", expectedDeliveryDate=" + shipment.getExpectedDeliveryDate();
     }
 }

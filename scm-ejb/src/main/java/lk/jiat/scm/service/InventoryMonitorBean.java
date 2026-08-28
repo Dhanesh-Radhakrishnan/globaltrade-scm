@@ -49,6 +49,7 @@ public class InventoryMonitorBean {
 
     @Lock(LockType.READ)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @Schedule(minute = "*/30", hour = "*", persistent = true)
     public void scanAndAlertLowStock() {
         for (InventoryItem item : findBelowThreshold()) {
             auditService.record(
@@ -58,6 +59,7 @@ public class InventoryMonitorBean {
                     "SYSTEM_TIMER",
                     "Quantity on hand " + item.getQuantityOnHand() + " below reorder threshold " + item.getReorderThreshold()
             );
+            System.out.println("Low stock alert for item: " + item.getSku() + ", quantity on hand: " + item.getQuantityOnHand());
         }
     }
 }

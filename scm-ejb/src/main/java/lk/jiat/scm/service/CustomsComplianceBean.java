@@ -1,8 +1,6 @@
 package lk.jiat.scm.service;
 
-import jakarta.ejb.Stateless;
-import jakarta.ejb.TransactionAttribute;
-import jakarta.ejb.TransactionAttributeType;
+import jakarta.ejb.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lk.jiat.scm.entity.CustomsDocument;
@@ -16,6 +14,9 @@ public class CustomsComplianceBean {
 
     @PersistenceContext(unitName = "SCMPU")
     private EntityManager em;
+
+    @EJB
+    private AuditService auditService;
 
     public CustomsDocument createDocument(Long shipmentId, String documentNumber, String documentType, LocalDateTime complianceDeadline) {
         if (documentNumber == null || documentNumber.isBlank()) {
@@ -88,5 +89,19 @@ public class CustomsComplianceBean {
             Thread.currentThread().interrupt();
         }
         return true;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @Schedule(hour = "0", minute = "0", persistent = true)
+    public void scanForUpcomingDeadlines() {
+        for (CustomsDocument document : findDocumentsNearingDeadline(3)) {
+            auditService.record(
+                    "CustomsDocument",
+                    document.getId(),
+                    "DEADLINE_APPROACHING",
+                    "SYSTEM_TIMER",
+                    "Compliance deadline " + document.getComplianceDeadline() + " approaching for document " + document.getDocumentNumber()
+            );
+        }
     }
 }
