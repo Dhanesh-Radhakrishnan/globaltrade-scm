@@ -32,8 +32,11 @@ public class OrderProcessingBean {
     @EJB
     private InventoryMonitorBean inventoryMonitor;
 
+    @EJB
+    private ShipmentTrackingBean shipmentTrackingBean;
+
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public Order placeOrder(Long vendorId, Long inventoryItemId, int quantity) {
+    public Order placeOrder(Long vendorId, Long inventoryItemId, int quantity, LocalDateTime expectedDeliveryDate) {
         Vendor vendor = vendorService.findById(vendorId);
         if (vendor == null) {
             throw new RuntimeException("Vendor not found: " + vendorId);
@@ -52,6 +55,9 @@ public class OrderProcessingBean {
         shipment.setTrackingNumber("TRK-" + UUID.randomUUID().toString().substring(0, 12).toUpperCase());
         shipment.setShipmentStatus(ShipmentStatus.PENDING);
         em.persist(shipment);
+        em.flush();
+
+        shipmentTrackingBean.scheduleDeliveryCheck(shipment.getId(), expectedDeliveryDate);
 
         Order order = new Order();
         order.setOrderNumber("ORD-" + UUID.randomUUID().toString().substring(0, 12).toUpperCase());
