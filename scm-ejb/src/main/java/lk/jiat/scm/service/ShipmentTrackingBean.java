@@ -14,11 +14,15 @@ import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import lk.jiat.scm.entity.Shipment;
 import lk.jiat.scm.entity.ShipmentStatus;
+import lk.jiat.scm.exception.CarrierSystemUnavailableException;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Stateless
 public class ShipmentTrackingBean {
@@ -31,6 +35,8 @@ public class ShipmentTrackingBean {
 
     @Resource
     private TimerService timerService;
+
+    private static final Logger LOGGER = Logger.getLogger(ShipmentTrackingBean.class.getName());
 
     public Shipment findById(Long id) {
         return em.find(Shipment.class, id);
@@ -75,6 +81,32 @@ public class ShipmentTrackingBean {
         timerService.createSingleActionTimer(triggerTime, config);
 
         return shipment;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public String checkCarrierStatus(Long shipmentId, boolean simulateTimeout) throws CarrierSystemUnavailableException {
+        Shipment shipment = em.find(Shipment.class, shipmentId);
+        if (shipment == null) {
+            throw new RuntimeException("Shipment not found: " + shipmentId);
+        }
+        try {
+            return queryCarrierSystem(shipment.getTrackingNumber(), simulateTimeout);
+        } catch (TimeoutException e) {
+            LOGGER.log(Level.WARNING, "Carrier system timeout for shipmentId=" + shipmentId);
+            throw new CarrierSystemUnavailableException("Carrier system is currently unavailable, please retry later");
+        }
+    }
+
+    private String queryCarrierSystem(String trackingNumber, boolean simulateTimeout) throws TimeoutException {
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        if (simulateTimeout) {
+            throw new TimeoutException("Simulated carrier system timeout");
+        }
+        return "IN_TRANSIT";
     }
 
     @Timeout

@@ -6,6 +6,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 import lk.jiat.scm.entity.InventoryItem;
+import lk.jiat.scm.exception.InsufficientInventoryException;
 import lk.jiat.scm.service.InventoryMonitorBean;
 
 import java.util.List;
@@ -27,8 +28,12 @@ public class TestInventoryResource {
     @Path("/adjust")
     public Response adjustStock(@QueryParam("inventoryItemId") Long inventoryItemId,
                                 @QueryParam("delta") int delta) {
-        InventoryItem item = inventoryMonitorBean.adjustStock(inventoryItemId, delta);
-        return Response.ok(describe(item)).build();
+        try {
+            InventoryItem item = inventoryMonitorBean.adjustStock(inventoryItemId, delta);
+            return Response.ok(describe(item)).build();
+        } catch (InsufficientInventoryException e) {
+            return Response.status(Response.Status.CONFLICT).entity(e.getMessage()).build();
+        }
     }
 
     @GET

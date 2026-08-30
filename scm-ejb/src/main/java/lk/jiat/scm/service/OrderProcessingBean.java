@@ -15,6 +15,7 @@ import lk.jiat.scm.entity.OrderStatus;
 import lk.jiat.scm.entity.Shipment;
 import lk.jiat.scm.entity.ShipmentStatus;
 import lk.jiat.scm.entity.Vendor;
+import lk.jiat.scm.exception.InsufficientInventoryException;
 import lk.jiat.scm.interceptor.AuditLoggingInterceptor;
 
 import java.math.BigDecimal;
@@ -40,7 +41,7 @@ public class OrderProcessingBean {
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     @RolesAllowed("LogisticsCoordinator")
-    public Order placeOrder(Long vendorId, Long inventoryItemId, int quantity, LocalDateTime expectedDeliveryDate) {
+    public Order placeOrder(Long vendorId, Long inventoryItemId, int quantity, LocalDateTime expectedDeliveryDate) throws InsufficientInventoryException {
         Vendor vendor = vendorService.findById(vendorId);
         if (vendor == null) {
             throw new RuntimeException("Vendor not found: " + vendorId);
@@ -48,7 +49,7 @@ public class OrderProcessingBean {
 
         InventoryItem item = inventoryMonitor.checkStock(inventoryItemId);
         if (item.getQuantityOnHand() < quantity) {
-            throw new RuntimeException("Insufficient stock for item: " + item.getSku());
+            throw new InsufficientInventoryException("Insufficient stock for item: " + item.getSku());
         }
 
         BigDecimal totalAmount = item.getUnitPrice().multiply(BigDecimal.valueOf(quantity));

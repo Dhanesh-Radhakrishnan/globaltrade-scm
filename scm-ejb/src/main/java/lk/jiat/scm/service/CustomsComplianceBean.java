@@ -7,6 +7,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lk.jiat.scm.entity.CustomsDocument;
 import lk.jiat.scm.entity.Shipment;
+import lk.jiat.scm.exception.CustomsDocumentInvalidException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,15 +23,15 @@ public class CustomsComplianceBean {
     private AuditService auditService;
 
     @RolesAllowed("CustomsAgent")
-    public CustomsDocument createDocument(Long shipmentId, String documentNumber, String documentType, LocalDateTime complianceDeadline) {
+    public CustomsDocument createDocument(Long shipmentId, String documentNumber, String documentType, LocalDateTime complianceDeadline) throws CustomsDocumentInvalidException {
         if (documentNumber == null || documentNumber.isBlank()) {
-            throw new RuntimeException("Document number is required");
+            throw new CustomsDocumentInvalidException("Document number is required");
         }
         if (documentType == null || documentType.isBlank()) {
-            throw new RuntimeException("Document type is required");
+            throw new CustomsDocumentInvalidException("Document type is required");
         }
         if (complianceDeadline == null) {
-            throw new RuntimeException("Compliance deadline is required");
+            throw new CustomsDocumentInvalidException("Compliance deadline is required");
         }
 
         Shipment shipment = em.find(Shipment.class, shipmentId);
@@ -48,7 +49,6 @@ public class CustomsComplianceBean {
 
         return document;
     }
-
     public CustomsDocument findById(Long id) {
         return em.find(CustomsDocument.class, id);
     }

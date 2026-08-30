@@ -6,6 +6,7 @@ import jakarta.ejb.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lk.jiat.scm.entity.InventoryItem;
+import lk.jiat.scm.exception.InsufficientInventoryException;
 
 import java.util.List;
 
@@ -30,14 +31,14 @@ public class InventoryMonitorBean {
 
     @Lock(LockType.WRITE)
     @RolesAllowed({"WarehouseManager", "LogisticsCoordinator"})
-    public InventoryItem adjustStock(Long inventoryItemId, int delta) {
+    public InventoryItem adjustStock(Long inventoryItemId, int delta) throws InsufficientInventoryException {
         InventoryItem item = em.find(InventoryItem.class, inventoryItemId);
         if (item == null) {
             throw new RuntimeException("Inventory item not found: " + inventoryItemId);
         }
         int newQuantity = item.getQuantityOnHand() + delta;
         if (newQuantity < 0) {
-            throw new RuntimeException("Insufficient stock for item: " + item.getSku());
+            throw new InsufficientInventoryException("Insufficient stock for item: " + item.getSku());
         }
         item.setQuantityOnHand(newQuantity);
         return item;

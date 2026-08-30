@@ -7,6 +7,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 import lk.jiat.scm.entity.Shipment;
 import lk.jiat.scm.entity.ShipmentStatus;
+import lk.jiat.scm.exception.CarrierSystemUnavailableException;
 import lk.jiat.scm.service.ShipmentTrackingBean;
 
 import java.time.LocalDateTime;
@@ -56,6 +57,18 @@ public class TestShipmentResource {
         LocalDateTime expectedDeliveryDate = LocalDateTime.now().plusSeconds(secondsFromNow);
         Shipment shipment = shipmentTrackingBean.scheduleDeliveryCheck(shipmentId, expectedDeliveryDate);
         return Response.ok(describe(shipment)).build();
+    }
+
+    @GET
+    @Path("/carrier-status")
+    public Response checkCarrierStatus(@QueryParam("shipmentId") Long shipmentId,
+                                       @QueryParam("simulateTimeout") boolean simulateTimeout) {
+        try {
+            String status = shipmentTrackingBean.checkCarrierStatus(shipmentId, simulateTimeout);
+            return Response.ok("carrierStatus=" + status).build();
+        } catch (CarrierSystemUnavailableException e) {
+            return Response.status(Response.Status.SERVICE_UNAVAILABLE).entity(e.getMessage()).build();
+        }
     }
 
     private String describe(Shipment shipment) {

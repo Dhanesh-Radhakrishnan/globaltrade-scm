@@ -6,6 +6,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 import lk.jiat.scm.entity.CustomsDocument;
+import lk.jiat.scm.exception.CustomsDocumentInvalidException;
 import lk.jiat.scm.service.CustomsComplianceBean;
 
 import java.time.LocalDateTime;
@@ -23,9 +24,13 @@ public class TestCustomsResource {
                                    @QueryParam("documentNumber") String documentNumber,
                                    @QueryParam("documentType") String documentType,
                                    @QueryParam("daysUntilDeadline") int daysUntilDeadline) {
-        LocalDateTime deadline = LocalDateTime.now().plusDays(daysUntilDeadline);
-        CustomsDocument document = customsComplianceBean.createDocument(shipmentId, documentNumber, documentType, deadline);
-        return Response.ok(describe(document)).build();
+        try {
+            LocalDateTime deadline = LocalDateTime.now().plusDays(daysUntilDeadline);
+            CustomsDocument document = customsComplianceBean.createDocument(shipmentId, documentNumber, documentType, deadline);
+            return Response.ok(describe(document)).build();
+        } catch (CustomsDocumentInvalidException e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        }
     }
 
     @GET

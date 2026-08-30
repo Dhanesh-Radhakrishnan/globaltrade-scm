@@ -2,9 +2,7 @@ package lk.jiat.scm.service;
 
 import jakarta.annotation.Resource;
 import jakarta.annotation.security.DeclareRoles;
-import jakarta.ejb.EJBAccessException;
-import jakarta.ejb.SessionContext;
-import jakarta.ejb.Stateless;
+import jakarta.ejb.*;
 import jakarta.interceptor.ExcludeClassInterceptors;
 import jakarta.interceptor.Interceptors;
 import jakarta.persistence.EntityManager;
@@ -70,4 +68,13 @@ public class VendorServiceBean {
             vendor.setActive(false);
         }
     }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void forceSystemException(Long vendorId) {
+        Vendor vendor = findById(vendorId);
+        vendor.setVendorName("SYSTEM_EXCEPTION_TEST_MARKER");
+        Vendor phantom = findById(-999L);
+        phantom.getVendorName();
+    }
+
 }

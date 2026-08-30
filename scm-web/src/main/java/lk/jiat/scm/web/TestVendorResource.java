@@ -72,6 +72,13 @@ public class TestVendorResource {
         return Response.ok("deactivated id=" + id).build();
     }
 
+    @GET
+    @Path("/force-system-exception")
+    public Response forceSystemException(@QueryParam("vendorId") Long vendorId) {
+        vendorServiceBean.forceSystemException(vendorId);
+        return Response.ok("should not reach here").build();
+    }
+
     private String describe(Vendor vendor) {
         return "id=" + vendor.getId()
                 + ", vendorName=" + vendor.getVendorName()
