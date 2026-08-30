@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE glassfish-ejb-jar PUBLIC "-//GlassFish.org//DTD GlassFish Application Server 3.1 EJB 3.1//EN" "http://glassfish.org/dtds/glassfish-ejb-jar_3_1-1.dtd">
+<glassfish-ejb-jar>
+    <security-role-mapping>
+        <role-name>LogisticsCoordinator</role-name>
+        <group-name>LogisticsCoordinator</group-name>
+    </security-role-mapping>
+    <security-role-mapping>
+        <role-name>CustomsAgent</role-name>
+        <group-name>CustomsAgent</group-name>
+    </security-role-mapping>
+    <security-role-mapping>
+        <role-name>WarehouseManager</role-name>
+        <group-name>WarehouseManager</group-name>
+    </security-role-mapping>
+    <security-role-mapping>
+        <role-name>VendorRepresentative</role-name>
+        <group-name>VendorRepresentative</group-name>
+    </security-role-mapping>
+</glassfish-ejb-jar>
