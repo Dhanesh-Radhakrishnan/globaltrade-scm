@@ -92,7 +92,7 @@ public class CustomsComplianceBean {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @Schedule(hour = "0", minute = "0", persistent = true)
+//    @Schedule(hour = "0", minute = "0", persistent = true)
     public void scanForUpcomingDeadlines() {
         for (CustomsDocument document : findDocumentsNearingDeadline(3)) {
             auditService.record(

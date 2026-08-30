@@ -49,7 +49,7 @@ public class InventoryMonitorBean {
 
     @Lock(LockType.READ)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @Schedule(minute = "*/30", hour = "*", persistent = true)
+//    @Schedule(minute = "*/30", hour = "*", persistent = true)
     public void scanAndAlertLowStock() {
         for (InventoryItem item : findBelowThreshold()) {
             auditService.record(
