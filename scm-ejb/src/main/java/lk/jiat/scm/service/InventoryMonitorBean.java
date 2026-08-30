@@ -29,7 +29,7 @@ public class InventoryMonitorBean {
     }
 
     @Lock(LockType.WRITE)
-    @RolesAllowed("WarehouseManager")
+    @RolesAllowed({"WarehouseManager", "LogisticsCoordinator"})
     public InventoryItem adjustStock(Long inventoryItemId, int delta) {
         InventoryItem item = em.find(InventoryItem.class, inventoryItemId);
         if (item == null) {
@@ -53,7 +53,7 @@ public class InventoryMonitorBean {
 
     @Lock(LockType.READ)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-//    @Schedule(minute = "*/30", hour = "*", persistent = true)
+    @Schedule(minute = "*/30", hour = "*", persistent = true)
     public void scanAndAlertLowStock() {
         for (InventoryItem item : findBelowThreshold()) {
             auditService.record(
