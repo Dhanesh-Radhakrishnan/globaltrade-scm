@@ -1,5 +1,9 @@
 package lk.jiat.scm.service;
 
+import jakarta.annotation.Resource;
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.ejb.EJBAccessException;
+import jakarta.ejb.SessionContext;
 import jakarta.ejb.Stateless;
 import jakarta.interceptor.ExcludeClassInterceptors;
 import jakarta.interceptor.Interceptors;
@@ -13,7 +17,11 @@ import java.util.List;
 
 @Stateless
 @Interceptors({AuditLoggingInterceptor.class})
+@DeclareRoles("VendorRepresentative")
 public class VendorServiceBean {
+
+    @Resource
+    private SessionContext ctx;
 
     @PersistenceContext(unitName = "SCMPU")
     private EntityManager em;
@@ -44,6 +52,15 @@ public class VendorServiceBean {
     @ExcludeClassInterceptors
     @Interceptors({VendorDataValidationInterceptor.class, AuditLoggingInterceptor.class})
     public Vendor updateVendor(Vendor vendor) {
+        Vendor existing = em.find(Vendor.class, vendor.getId());
+        if (existing == null) {
+            throw new RuntimeException("Vendor not found: " + vendor.getId());
+        }
+        String caller = ctx.getCallerPrincipal().getName();
+        boolean isOwner = caller.equals(existing.getManagedUsername());
+        if (!ctx.isCallerInRole("VendorRepresentative") || !isOwner) {
+            throw new EJBAccessException("Caller " + caller + " is not authorized to update vendor " + vendor.getId());
+        }
         return em.merge(vendor);
     }
 

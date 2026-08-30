@@ -1,5 +1,7 @@
 package lk.jiat.scm.service;
 
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -10,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Stateless
+@DeclareRoles("CustomsAgent")
 public class CustomsComplianceBean {
 
     @PersistenceContext(unitName = "SCMPU")
@@ -18,6 +21,7 @@ public class CustomsComplianceBean {
     @EJB
     private AuditService auditService;
 
+    @RolesAllowed("CustomsAgent")
     public CustomsDocument createDocument(Long shipmentId, String documentNumber, String documentType, LocalDateTime complianceDeadline) {
         if (documentNumber == null || documentNumber.isBlank()) {
             throw new RuntimeException("Document number is required");
@@ -55,6 +59,7 @@ public class CustomsComplianceBean {
                 .getResultList();
     }
 
+    @RolesAllowed("CustomsAgent")
     public CustomsDocument verifyDocument(Long documentId) {
         CustomsDocument document = em.find(CustomsDocument.class, documentId);
         if (document == null) {
@@ -74,6 +79,7 @@ public class CustomsComplianceBean {
     }
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    @RolesAllowed("CustomsAgent")
     public boolean checkExternalCustomsSystem(Long documentId) {
         CustomsDocument document = em.find(CustomsDocument.class, documentId);
         if (document == null) {

@@ -1,5 +1,7 @@
 package lk.jiat.scm.service;
 
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -8,6 +10,7 @@ import lk.jiat.scm.entity.InventoryItem;
 import java.util.List;
 
 @Singleton
+@DeclareRoles("WarehouseManager")
 public class InventoryMonitorBean {
 
     @EJB
@@ -26,6 +29,7 @@ public class InventoryMonitorBean {
     }
 
     @Lock(LockType.WRITE)
+    @RolesAllowed("WarehouseManager")
     public InventoryItem adjustStock(Long inventoryItemId, int delta) {
         InventoryItem item = em.find(InventoryItem.class, inventoryItemId);
         if (item == null) {

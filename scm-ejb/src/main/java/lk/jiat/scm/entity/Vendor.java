@@ -28,6 +28,17 @@ public class Vendor {
     @Column(name = "active")
     private boolean active = true;
 
+    @Column(name = "managed_username")
+    private String managedUsername;
+
+    public String getManagedUsername() {
+        return managedUsername;
+    }
+
+    public void setManagedUsername(String managedUsername) {
+        this.managedUsername = managedUsername;
+    }
+
     public Long getId() {
         return id;
     }

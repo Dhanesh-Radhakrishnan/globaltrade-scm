@@ -1,5 +1,7 @@
 package lk.jiat.scm.service;
 
+import jakarta.annotation.security.DeclareRoles;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.TransactionAttribute;
@@ -21,6 +23,7 @@ import java.util.UUID;
 
 @Stateless
 @Interceptors({AuditLoggingInterceptor.class})
+@DeclareRoles("LogisticsCoordinator")
 public class OrderProcessingBean {
 
     @PersistenceContext(unitName = "SCMPU")
@@ -36,6 +39,7 @@ public class OrderProcessingBean {
     private ShipmentTrackingBean shipmentTrackingBean;
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @RolesAllowed("LogisticsCoordinator")
     public Order placeOrder(Long vendorId, Long inventoryItemId, int quantity, LocalDateTime expectedDeliveryDate) {
         Vendor vendor = vendorService.findById(vendorId);
         if (vendor == null) {

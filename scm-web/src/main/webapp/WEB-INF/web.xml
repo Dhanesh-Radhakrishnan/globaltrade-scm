@@ -8,6 +8,10 @@
         <web-resource-collection>
             <web-resource-name>SecurityTestResource</web-resource-name>
             <url-pattern>/test/security/*</url-pattern>
+            <url-pattern>/test/order/*</url-pattern>
+            <url-pattern>/test/vendor/*</url-pattern>
+            <url-pattern>/test/customs/*</url-pattern>
+            <url-pattern>/test/inventory/*</url-pattern>
         </web-resource-collection>
         <auth-constraint>
             <role-name>LogisticsCoordinator</role-name>
@@ -34,5 +38,7 @@
     <security-role>
         <role-name>VendorRepresentative</role-name>
     </security-role>
+
+
 
 </web-app>
