@@ -36,12 +36,17 @@ public class InventoryMonitorBean {
         if (item == null) {
             throw new RuntimeException("Inventory item not found: " + inventoryItemId);
         }
-        int newQuantity = item.getQuantityOnHand() + delta;
-        if (newQuantity < 0) {
-            throw new InsufficientInventoryException("Insufficient stock for item: " + item.getSku());
-        }
+        int newQuantity = resolveNewQuantity(item.getQuantityOnHand(), delta, item.getSku());
         item.setQuantityOnHand(newQuantity);
         return item;
+    }
+
+    int resolveNewQuantity(int currentQuantity, int delta, String sku) throws InsufficientInventoryException {
+        int newQuantity = currentQuantity + delta;
+        if (newQuantity < 0) {
+            throw new InsufficientInventoryException("Insufficient stock for item: " + sku);
+        }
+        return newQuantity;
     }
 
     @Lock(LockType.READ)
