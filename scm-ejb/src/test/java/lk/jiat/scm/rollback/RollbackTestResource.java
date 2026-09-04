@@ -9,6 +9,7 @@ import lk.jiat.scm.entity.InventoryItem;
 import lk.jiat.scm.entity.Order;
 import lk.jiat.scm.entity.Vendor;
 import lk.jiat.scm.exception.InsufficientInventoryException;
+import lk.jiat.scm.service.InventoryMonitorBean;
 import lk.jiat.scm.service.OrderProcessingBean;
 
 import java.time.LocalDateTime;
@@ -21,6 +22,9 @@ public class RollbackTestResource {
 
     @EJB
     private RollbackTestSupportBean supportBean;
+
+    @EJB
+    private InventoryMonitorBean inventoryMonitorBean;
 
     @GET
     @Path("/setup")
@@ -41,6 +45,14 @@ public class RollbackTestResource {
         } catch (InsufficientInventoryException e) {
             return Response.status(Response.Status.CONFLICT).entity(e.getMessage()).build();
         }
+    }
+
+    @GET
+    @Path("/attempt-adjust-stock")
+    public Response attemptAdjustStock(@QueryParam("inventoryItemId") Long inventoryItemId,
+                                       @QueryParam("delta") int delta) throws InsufficientInventoryException {
+        InventoryItem item = inventoryMonitorBean.adjustStock(inventoryItemId, delta);
+        return Response.ok("quantityOnHand=" + item.getQuantityOnHand()).build();
     }
 
     @GET

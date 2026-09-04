@@ -8,6 +8,8 @@ import lk.jiat.scm.entity.OrderStatus;
 import lk.jiat.scm.entity.Shipment;
 import lk.jiat.scm.entity.ShipmentStatus;
 import lk.jiat.scm.entity.Vendor;
+import lk.jiat.scm.exception.CarrierSystemUnavailableException;
+import lk.jiat.scm.exception.CustomsDocumentInvalidException;
 import lk.jiat.scm.exception.InsufficientInventoryException;
 import lk.jiat.scm.interceptor.AuditLoggingInterceptor;
 import lk.jiat.scm.interceptor.VendorDataValidationInterceptor;
@@ -42,30 +44,38 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @ExtendWith(ArquillianExtension.class)
 class OrderRollbackArquillianIT {
 
+
+    @ArquillianResource
+    private URL baseUrl;
+
     private static final String WEB_XML = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
-                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                     xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
-                     version="6.0">
-                <security-constraint>
-                    <web-resource-collection>
-                        <web-resource-name>RollbackTest</web-resource-name>
-                        <url-pattern>/api/rollback/*</url-pattern>
-                    </web-resource-collection>
-                    <auth-constraint>
-                        <role-name>LogisticsCoordinator</role-name>
-                    </auth-constraint>
-                </security-constraint>
-                <login-config>
-                    <auth-method>BASIC</auth-method>
-                    <realm-name>SCMRealm</realm-name>
-                </login-config>
-                <security-role>
+        <?xml version="1.0" encoding="UTF-8"?>
+        <web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+                 version="6.0">
+            <security-constraint>
+                <web-resource-collection>
+                    <web-resource-name>RollbackTest</web-resource-name>
+                    <url-pattern>/api/rollback/*</url-pattern>
+                </web-resource-collection>
+                <auth-constraint>
                     <role-name>LogisticsCoordinator</role-name>
-                </security-role>
-            </web-app>
-            """;
+                    <role-name>CustomsAgent</role-name>
+                </auth-constraint>
+            </security-constraint>
+            <login-config>
+                <auth-method>BASIC</auth-method>
+                <realm-name>SCMRealm</realm-name>
+            </login-config>
+            <security-role>
+                <role-name>LogisticsCoordinator</role-name>
+            </security-role>
+            <security-role>
+                <role-name>CustomsAgent</role-name>
+            </security-role>
+        </web-app>
+        """;
 
     @Deployment(testable = false)
     public static WebArchive createDeployment() {
@@ -91,7 +101,11 @@ class OrderRollbackArquillianIT {
                         AuditLoggingInterceptor.class,
                         VendorDataValidationInterceptor.class
                 )
-                .addClass(InsufficientInventoryException.class)
+                .addClasses(
+                        InsufficientInventoryException.class,
+                        CustomsDocumentInvalidException.class,
+                        CarrierSystemUnavailableException.class
+                )
                 .addClasses(
                         RollbackTestApplication.class,
                         RollbackTestResource.class,
@@ -103,9 +117,11 @@ class OrderRollbackArquillianIT {
     }
 
     private static final String COORDINATOR_USERNAME = "coordinator1";
+    private static final String CUSTOMS_AGENT_USERNAME = "customsagent1";
 
     private String basicAuthHeader() {
-        String password = System.getenv("SCM_TEST_COORDINATOR_PASSWORD");
+//        String password = System.getenv("SCM_TEST_COORDINATOR_PASSWORD");
+        String password = "test1234"; // Hardcoded for testing purposes
         if (password == null || password.isBlank()) {
             throw new IllegalStateException("SCM_TEST_COORDINATOR_PASSWORD environment variable is not set");
         }
@@ -113,9 +129,64 @@ class OrderRollbackArquillianIT {
         return "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());
     }
 
+    private String customsAgentAuthHeader() {
+        String password = "test1234"; // Hardcoded for testing purposes
+        if (password == null || password.isBlank()) {
+            throw new IllegalStateException("SCM_TEST_CUSTOMSAGENT_PASSWORD environment variable is not set");
+        }
+        String credentials = CUSTOMS_AGENT_USERNAME + ":" + password;
+        return "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());
+    }
+
+
     @Test
     @RunAsClient
-    void insufficientStockLeavesNoOrderAndInventoryUnchanged(@ArquillianResource URL baseUrl) throws Exception {
+    void customsAgentIsDeniedAdjustStock() throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        String coordinatorAuth = basicAuthHeader();
+        String customsAgentAuth = customsAgentAuthHeader();
+
+        HttpRequest setupRequest = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "api/rollback/setup?startingQuantity=10"))
+                .header("Authorization", coordinatorAuth)
+                .GET()
+                .build();
+        HttpResponse<String> setupResponse = client.send(setupRequest, HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, setupResponse.statusCode());
+
+        String[] parts = setupResponse.body().split(",");
+        Long vendorId = Long.valueOf(parts[0].split("=")[1]);
+        Long inventoryItemId = Long.valueOf(parts[1].split("=")[1]);
+
+        try {
+            HttpRequest denialRequest = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "api/rollback/attempt-adjust-stock?inventoryItemId=" + inventoryItemId + "&delta=-2"))
+                    .header("Authorization", customsAgentAuth)
+                    .GET()
+                    .build();
+            HttpResponse<String> denialResponse = client.send(denialRequest, HttpResponse.BodyHandlers.ofString());
+            assertEquals(500, denialResponse.statusCode());
+
+            HttpRequest quantityRequest = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "api/rollback/inventory-quantity?inventoryItemId=" + inventoryItemId))
+                    .header("Authorization", coordinatorAuth)
+                    .GET()
+                    .build();
+            HttpResponse<String> quantityResponse = client.send(quantityRequest, HttpResponse.BodyHandlers.ofString());
+            assertEquals("10", quantityResponse.body());
+        } finally {
+            HttpRequest cleanupRequest = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "api/rollback/cleanup?vendorId=" + vendorId + "&inventoryItemId=" + inventoryItemId))
+                    .header("Authorization", coordinatorAuth)
+                    .GET()
+                    .build();
+            client.send(cleanupRequest, HttpResponse.BodyHandlers.ofString());
+        }
+    }
+
+    @Test
+    @RunAsClient
+    void insufficientStockLeavesNoOrderAndInventoryUnchanged() throws Exception {
         HttpClient client = HttpClient.newHttpClient();
         String authHeader = basicAuthHeader();
 
@@ -139,6 +210,7 @@ class OrderRollbackArquillianIT {
                     .GET()
                     .build();
             HttpResponse<String> attemptResponse = client.send(attemptRequest, HttpResponse.BodyHandlers.ofString());
+            System.out.println("STATUS=" + attemptResponse.statusCode() + " BODY=" + attemptResponse.body());
             assertEquals(409, attemptResponse.statusCode());
 
             HttpRequest quantityRequest = HttpRequest.newBuilder()
